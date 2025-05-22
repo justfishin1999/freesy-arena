@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 	"text/template"
 
 	"github.com/Team254/cheesy-arena/field"
@@ -232,6 +233,11 @@ func (web *Web) newHandler() http.Handler {
 	mux.HandleFunc("GET /setup/teams/generate_wpa_keys", web.teamsGenerateWpaKeysHandler)
 	mux.HandleFunc("GET /setup/teams/progress", web.teamsUpdateProgressBarHandler)
 	mux.HandleFunc("GET /setup/teams/refresh", web.teamsRefreshHandler)
+
+	//handle practice match addition
+	mux.HandleFunc("GET /admin/add_practice_match", web.addPracticeMatchGetHandler)
+	mux.HandleFunc("POST /admin/add_practice_match", web.addPracticeMatchPostHandler)
+
 	return mux
 }
 
@@ -250,4 +256,107 @@ func (web *Web) parseFiles(filenames ...string) (*template.Template, error) {
 
 	template := template.New("").Funcs(web.templateHelpers)
 	return template.ParseFiles(paths...)
+}
+
+
+//*****begin practice match filler line handler*****
+func (web *Web) addPracticeMatchGetHandler(w http.ResponseWriter, r *http.Request) {
+	template, err := web.parseFiles(
+		"templates/add_practice_match.html",
+		"templates/base.html",
+	)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	matches, err := web.arena.Database.GetMatchesByType(model.Practice, true)
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+
+	teams, err := web.arena.Database.GetAllTeams()
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+	teamMap := make(map[int]*model.Team)
+	for _, team := range teams {
+		teamMap[team.Id] = &team
+	}
+
+	data := struct {
+		EventSettings *model.EventSettings
+		Matches       []model.Match
+		Teams         map[int]*model.Team
+	}{
+		EventSettings: web.arena.EventSettings,
+		Matches:       matches,
+		Teams:         teamMap,
+	}
+
+	err = template.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		handleWebErr(w, err)
+	}
+}
+
+
+func (web *Web) addPracticeMatchPostHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	red := [3]int{
+		parseTeam(r.FormValue("red1")),
+		parseTeam(r.FormValue("red2")),
+		parseTeam(r.FormValue("red3")),
+	}
+	blue := [3]int{
+		parseTeam(r.FormValue("blue1")),
+		parseTeam(r.FormValue("blue2")),
+		parseTeam(r.FormValue("blue3")),
+	}
+
+	// Fetch existing practice matches to determine next match number
+	matches, err := web.arena.Database.GetMatchesByType(model.Practice, true)
+	if err != nil {
+		http.Error(w, "Failed to fetch matches", http.StatusInternalServerError)
+		return
+	}
+
+	nextTypeOrder := 1
+	nextMatchTime := time.Now()
+	if len(matches) > 0 {
+		last := matches[len(matches)-1]
+		nextTypeOrder = last.TypeOrder + 1
+		nextMatchTime = last.Time.Add(15 * time.Minute)
+	}
+
+	match := &model.Match{
+		Type:       model.Practice,
+		TypeOrder:  nextTypeOrder,
+		Time:       nextMatchTime,
+		Red1:       red[0],
+		Red2:       red[1],
+		Red3:       red[2],
+		Blue1:      blue[0],
+		Blue2:      blue[1],
+		Blue3:      blue[2],
+		Status:     game.MatchScheduled,
+		LongName:   fmt.Sprintf("Practice %d", nextTypeOrder),
+		ShortName:  fmt.Sprintf("P%d", nextTypeOrder),
+		NameDetail: "",
+	}
+
+	if err := web.arena.Database.CreateMatch(match); err != nil {
+		http.Error(w, "Failed to save match", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/admin/add_practice_match", http.StatusSeeOther)
+}
+
+func parseTeam(val string) int {
+	num, _ := strconv.Atoi(val)
+	return num
 }
