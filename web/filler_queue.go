@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"log"
 
 	"github.com/Team254/cheesy-arena/model"
 )
@@ -139,6 +140,37 @@ func (web *Web) editPracticeMatchHandler(w http.ResponseWriter, r *http.Request)
 
 	http.Redirect(w, r, "/admin/add_practice_match", http.StatusSeeOther)
 }
+
+func (web *Web) deletePracticeMatchHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	matchId, err := strconv.Atoi(r.FormValue("matchId"))
+	if err != nil {
+		http.Error(w, "Invalid match ID", http.StatusBadRequest)
+		return
+	}
+
+	match, err := web.arena.Database.GetMatchById(matchId)
+	if err != nil || match == nil || match.Type != model.Practice {
+		http.Error(w, "Match not found", http.StatusNotFound)
+		return
+	}
+
+	// 🔒 Backup before deleting
+	err = web.arena.Database.Backup(web.arena.EventSettings.Name, fmt.Sprintf("delete_match_%d", matchId))
+	if err != nil {
+		log.Printf("WARNING: Backup before deletion failed: %v", err)
+	}
+
+	// Delete match
+	err = web.arena.Database.DeleteMatch(match.Id)
+	if err != nil {
+		http.Error(w, "Failed to delete match", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/admin/add_practice_match", http.StatusSeeOther)
+}
+
 
 
 func parseTeam(val string) int {
