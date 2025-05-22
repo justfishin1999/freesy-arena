@@ -237,6 +237,7 @@ func (web *Web) newHandler() http.Handler {
 	mux.HandleFunc("GET /admin/add_practice_match", web.addPracticeMatchGetHandler)
 	mux.HandleFunc("POST /admin/add_practice_match", web.addPracticeMatchPostHandler)
 	mux.HandleFunc("POST /admin/edit_practice_match", web.editPracticeMatchHandler)
+	mux.HandleFunc("POST /admin/delete_practice_match", web.deletePracticeMatchHandler)
 
 	return mux
 }
