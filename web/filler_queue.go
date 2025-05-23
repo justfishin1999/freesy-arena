@@ -2,18 +2,19 @@ package web
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/game"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/Team254/cheesy-arena/game"
+
 	"github.com/Team254/cheesy-arena/model"
 )
 
-//*****begin practice match filler line handler*****
+// *****begin practice match filler line handler*****
 func (web *Web) addPracticeMatchGetHandler(w http.ResponseWriter, r *http.Request) {
 	template, err := web.parseFiles(
-		"templates/add_practice_match.html",
+		"templates/filler_queue.html",
 		"templates/base.html",
 	)
 	if err != nil {
@@ -52,8 +53,6 @@ func (web *Web) addPracticeMatchGetHandler(w http.ResponseWriter, r *http.Reques
 		handleWebErr(w, err)
 	}
 }
-
-
 
 func (web *Web) addPracticeMatchPostHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
@@ -139,7 +138,6 @@ func (web *Web) editPracticeMatchHandler(w http.ResponseWriter, r *http.Request)
 
 	http.Redirect(w, r, "/admin/add_practice_match", http.StatusSeeOther)
 }
-
 
 func parseTeam(val string) int {
 	num, _ := strconv.Atoi(val)
