@@ -26,9 +26,9 @@
           <div class="col-lg-2" data-bs-toggle="tooltip" title="Robot Status">Rbt</div>
           <div class="col-lg-2" data-bs-toggle="tooltip" title="Bypass/Disable">Byp</div>
         </div>
-        {{template "matchPlayTeam" dict "color" "B" "position" 1}}
-        {{template "matchPlayTeam" dict "color" "B" "position" 2}}
-        {{template "matchPlayTeam" dict "color" "B" "position" 3}}
+        {{template "matchPlayTeam" dict "color" "B" "position" 1 "data" . "bypass" 1}}
+        {{template "matchPlayTeam" dict "color" "B" "position" 2 "data" . "bypass" 2}}
+        {{template "matchPlayTeam" dict "color" "B" "position" 3 "data" . "bypass" 3}}
         <div id="playoffBlueAllianceInfo"></div>
       </div>
       <div class="col-lg-6 card card-body bg-red mb-2">
@@ -39,9 +39,9 @@
           <div class="col-lg-2" data-bs-toggle="tooltip" title="Robot Status">Rbt</div>
           <div class="col-lg-2" data-bs-toggle="tooltip" title="Bypass/Disable">Byp</div>
         </div>
-        {{template "matchPlayTeam" dict "color" "R" "position" 3}}
-        {{template "matchPlayTeam" dict "color" "R" "position" 2}}
-        {{template "matchPlayTeam" dict "color" "R" "position" 1}}
+        {{template "matchPlayTeam" dict "color" "R" "position" 3 "data" . "bypass" 4}}
+        {{template "matchPlayTeam" dict "color" "R" "position" 2 "data" . "bypass" 5}}
+        {{template "matchPlayTeam" dict "color" "R" "position" 1 "data" . "bypass" 6}}
         <div id="playoffRedAllianceInfo"></div>
       </div>
     </div>
@@ -50,12 +50,14 @@
         onclick="showOverlay();" disabled>
         Show Overlay
       </button>
-      <button type="button" id="startMatch" class="btn btn-success btn-match-play ms-1"
-        onclick="startMatch();" disabled>
+      <button accesskey="s" type="button" id="startMatch" class="btn btn-success btn-match-play ms-1"
+        onclick="startMatch();" disabled
+        data-toggle="tooltip" title="Quick Key [Alt]+s">
         Start Match
       </button>
-      <button type="button" id="commitResults" class="btn btn-primary btn-match-play ms-1"
-        onclick="confirmCommit();" disabled>
+      <button accesskey="c" type="button" id="commitResults" class="btn btn-primary btn-match-play ms-1"
+        onclick="confirmCommit();" disabled
+        data-toggle="tooltip" title="Quick Key [Alt]+c">
         Commit Results
       </button>
       <button type="button" id="showFinalScore" class="btn btn-info btn-match-play ms-1"
@@ -66,10 +68,11 @@
     <div class="row justify-content-center mt-1">
       <button type="button" id="substituteTeams" class="btn btn-primary btn-match-play btn-match-play-narrow ms-1"
         onclick="substituteTeams();" disabled>
-        Substitute Teams
+        Substitute
       </button>
-      <button type="button" id="abortMatch" class="btn btn-danger btn-match-play btn-match-play-narrow ms-1"
-        onclick="abortMatch();" disabled>
+      <button accesskey="a" type="button" id="abortMatch" class="btn btn-danger btn-match-play btn-match-play-narrow ms-1"
+        onclick="abortMatch();" disabled
+        data-toggle="tooltip" title="Quick Key [Alt]+a">
         Abort Match
       </button>
       <button type="button" id="discardResults" class="btn btn-warning btn-match-play btn-match-play-narrow ms-1"
@@ -113,6 +116,15 @@
             {{range $name, $status := .PlcArmorBlockStatuses}}
               <span class="badge badge-scoring" id="plc{{$name}}Status">{{$name}}</span>
             {{end}}
+          </p>
+        {{end}}
+        {{if .AlternateIOEnabled}}
+          <h6>Alternate IO Status</h6>
+          <p>
+            <span class="badge badge-alternatIO" id="scoreTableIO"></span>
+            <span class="badge badge-alternatIO" id="redEstopsIO"></span>
+            <span class="badge badge-alternatIO" id="blueEstopsIO"></span>
+            <span class="badge badge-scoring" id="fieldEStop">Field E-Stop</span><br />
           </p>
         {{end}}
         </div>
@@ -208,6 +220,12 @@
                        onclick="setAllianceStationDisplay();" id="fieldResetRadio"> Field Reset
               </label>
             </div>
+            <div>
+              <label>
+                <input type="radio" name="allianceStationDisplay" value="signalCount"
+                       onclick="setAllianceStationDisplay();" id="fieldResetRadio"> Signal Count
+              </label>
+            </div>
           </div>
           <h6 class="mt-4">Shown Match Result</h6>
           <span class="badge badge-saved-match" id="savedMatchName">None</span>
@@ -256,7 +274,7 @@
       <div class="modal-footer">
         <form class="form-horizontal" action="/setup/teams/clear" method="POST">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-danger" onclick="commitResults();" data-bs-dismiss="modal">
+          <button accesskey="v" type="button" class="btn btn-danger" onclick="commitResults();" data-bs-dismiss="modal" data-toggle="tooltip" title="Quick Key [Alt]+v">
             Commit Results
           </button>
         </form>
@@ -307,7 +325,9 @@
     <div class="robot-status" data-bs-toggle="tooltip" title="Battery / Time Since Link Lost"></div>
   </div>
   <div class="col-lg-2 col-no-padding">
-    <div class="bypass-status" onclick="toggleBypass('{{.color}}{{.position}}');"></div>
+    <div accesskey="{{.bypass}}" class="bypass-status" onclick="toggleBypass('{{.color}}{{.position}}');" 
+      data-toggle="tooltip" title="Quick Key [Alt]+{{.bypass}}">
+    </div>
   </div>
 </div>
 {{end}}

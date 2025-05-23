@@ -107,6 +107,8 @@ func (web *Web) matchPlayMatchLoadHandler(w http.ResponseWriter, r *http.Request
 		handleWebErr(w, err)
 		return
 	}
+
+	web.arena.Plc.ResetEstops()
 }
 
 // The websocket endpoint for the match play client to send control commands and receive status updates.
@@ -287,6 +289,8 @@ func (web *Web) matchPlayWebsocketHandler(w http.ResponseWriter, r *http.Request
 				continue
 			}
 			web.arena.FieldVolunteers = true
+			web.arena.AllianceStationDisplayMode = "signalCount"
+			web.arena.AllianceStationDisplayModeNotifier.Notify()
 		case "signalReset":
 			if web.arena.MatchState != field.PostMatch && web.arena.MatchState != field.PreMatch {
 				// Don't allow clearing the field until the match is over.

@@ -152,6 +152,7 @@ var handleMatchTime = function(data) {
   translateMatchTime(data, function(matchState, matchStateText, countdownSec) {
     $("#matchState").text(matchStateText);
     $("#matchTime").text(countdownSec);
+    $("#matchTimeAllianceStation").text(countdownSec);
     if (matchStateText === "PRE-MATCH" | matchStateText === "POST-MATCH") {
       $(".ds-dependent").attr("data-preMatch", "true");
     } else {
@@ -160,17 +161,65 @@ var handleMatchTime = function(data) {
   });
 };
 
+// Handles a websocket message to play a sound to signal match start/stop/etc.
+const handlePlaySound = function(sound) {
+  $("audio").each(function(k, v) {
+    // Stop and reset any sounds that are still playing.
+    v.pause();
+    v.currentTime = 0;
+  });
+  $("#sound-" + sound)[0].play();
+};
+
+
 // Handles a websocket message to update the match score.
 var handleRealtimeScore = function(data,reversed) {
+  let redCoral, blueCoral;
+ /*  if (currentMatch.Type === matchTypePlayoff) { */
+  if (false) {
+    redCoral = "1";//data.Red.ScoreSummary.NumCoral;
+    blueCoral = "2";//data.Blue.ScoreSummary.NumCoral;
+  } else {
+    redCoral = `${data.Red.ScoreSummary.NumCoralLevels}/${data.Red.ScoreSummary.NumCoralLevelsGoal}`;
+    blueCoral = `${data.Blue.ScoreSummary.NumCoralLevels}/${data.Blue.ScoreSummary.NumCoralLevelsGoal}`;
+  } 
 
-    if (reversed === "true") {
+let level1, level2, level3, level4;
+
+
+    if (reversed  === "true") {
       $("#rightScore").text(data.Red.ScoreSummary.Score);
       $("#leftScore").text(data.Blue.ScoreSummary.Score);
+      $("#rightScoreAllianceDisplay").text(data.Blue.ScoreSummary.Score);
+      $("#leftScoreAllianceDisplay").text(data.Red.ScoreSummary.Score);
+      $("#currentCoral").text(blueCoral);
+      $("#currentAlgae").text(data.Blue.ScoreSummary.NumAlgae);
+      level1 = data.Blue.Score.Reef.TroughNear+data.Blue.Score.Reef.TroughFar;
+      level2 = data.Blue.Score.Reef.Branches[0].filter(Boolean).length;
+      level3 = data.Blue.Score.Reef.Branches[1].filter(Boolean).length;
+      level4 = data.Blue.Score.Reef.Branches[2].filter(Boolean).length;
+      $("#level1").text("1-" + level1.toString().padStart(2, "0"));
+      $("#level2").text("2-" + level2.toString().padStart(2, "0"));
+      $("#level3").text("3-" + level3.toString().padStart(2, "0"));
+      $("#level4").text("4-" + level4.toString().padStart(2, "0"));
     } else {
       $("#rightScore").text(data.Blue.ScoreSummary.Score);
       $("#leftScore").text(data.Red.ScoreSummary.Score);
-
+      $("#rightScoreAllianceDisplay").text(data.Red.ScoreSummary.Score);
+      $("#leftScoreAllianceDisplay").text(data.Blue.ScoreSummary.Score);
+      $("#currentCoral").text(redCoral);
+      $("#currentAlgae").text(data.Red.ScoreSummary.NumAlgae);
+      level1 = data.Red.Score.Reef.TroughNear+data.Red.Score.Reef.TroughFar;
+      level2 = data.Red.Score.Reef.Branches[0].filter(Boolean).length;
+      level3 = data.Red.Score.Reef.Branches[1].filter(Boolean).length;
+      level4 = data.Red.Score.Reef.Branches[2].filter(Boolean).length;
+      $("#level1").text("1-" + level1.toString().padStart(2, "0"));
+      $("#level2").text("2-" + level2.toString().padStart(2, "0"));
+      $("#level3").text("3-" + level3.toString().padStart(2, "0"));
+      $("#level4").text("4-" + level4.toString().padStart(2, "0"));
+      
     }
+
 };
 
 // Handles a websocket message to update current match
@@ -206,13 +255,40 @@ var editFtaNotes = function(element) {
 $(function() {
   // Read the configuration for this display from the URL query string.
   var urlParams = new URLSearchParams(window.location.search);
-  var reversed = urlParams.get("reversed");
-  if (reversed === "true") {
-    redSide = "right";
-    blueSide = "left";
-  } else {
-    redSide = "left";
-    blueSide = "right";
+  var reversed = urlParams.get("reversed") === "true"; // Initialize reversed variable
+  var isds = urlParams.get("ds"); 
+  updateSides(reversed);
+
+  // Add event listener to Flip button
+  $(".left-position, .right-position").click(function() {
+    if (isds === "true") {
+      return;
+    }
+    reversed = !reversed; // Toggle reversed state
+    updateSides(reversed);
+
+    // Update the data-reversed attribute for visual updates
+    $(".reversible-left").attr("data-reversed", reversed);
+    $(".reversible-right").attr("data-reversed", reversed);
+
+    // Optional: Persist state to the URL (if needed)
+    const newUrl = new URL(window.location);
+    newUrl.searchParams.set("reversed", reversed);
+    window.history.replaceState({}, "", newUrl);
+  });
+  
+  function updateSides(isReversed) {
+    if (isReversed) {
+      redSide = "right";
+      blueSide = "left";
+    } else {
+      redSide = "left";
+      blueSide = "right";
+    }
+
+    // Update the DOM to reflect the new sides
+    $(".reversible-left").attr("data-reversed", isReversed);
+    $(".reversible-right").attr("data-reversed", isReversed);
   }
 
   //Read if display to be used in a Driver Station, ignore FTA flag if so.
@@ -238,5 +314,6 @@ $(function() {
     matchTiming: function(event) { handleMatchTiming(event.data); },
     matchTime: function(event) { handleMatchTime(event.data); },
     realtimeScore: function(event) { handleRealtimeScore(event.data,reversed); },
+    playSound: function(event) { handlePlaySound(event.data); },
   });
 });
