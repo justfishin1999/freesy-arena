@@ -85,10 +85,13 @@ func (score *Score) Summarize(opponentScore *Score) *ScoreSummary {
 				switch rule.RuleNumber {
 				case "G410":
 					summary.CoralBonusRankingPoint = true
+					fmt.Print("G410 triggered - coral bonus ranking point auto earned")
 				case "G418":
 					summary.BargeBonusRankingPoint = true
+					fmt.Print("G418 triggered - barge bonus ranking point auto earned")
 				case "G428":
 					summary.BargeBonusRankingPoint = true
+					fmt.Print("G428 triggered - barge bonus ranking point auto earned")
 				}
 			}
 		}
