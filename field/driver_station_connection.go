@@ -264,12 +264,12 @@ func (dsConn *DriverStationConnection) decodeStatusPacket(data [36]byte) {
 	dsConn.MissedPacketCount = int(data[2]) - dsConn.missedPacketOffset
 }
 
-// Listens for TCP connection requests to Cheesy Arena from driver stations.
+// Listens for TCP connection requests to Freezy Arena from driver stations.
 func (arena *Arena) listenForDriverStations() {
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", network.ServerIpAddress, driverStationTcpListenPort))
 	if err != nil {
 		log.Printf("Error opening driver station TCP socket: %v", err.Error())
-		log.Printf("Change IP address to %s and restart Cheesy Arena to fix.", network.ServerIpAddress)
+		log.Printf("Change IP address to %s and restart Freezy Arena to fix.", network.ServerIpAddress)
 		return
 	}
 	defer l.Close()
@@ -299,7 +299,7 @@ func (arena *Arena) listenForDriverStations() {
 		// Check to see if the team is supposed to be on the field, and notify the DS accordingly.
 		assignedStation := arena.getAssignedAllianceStation(teamId)
 		if assignedStation == "" {
-			log.Printf("Rejecting connection from Team %d, who is not in the current match, soon.", teamId)
+			log.Printf("Rejecting DS connection from Team %d, who is not in the current match!", teamId)
 			go func() {
 				// Wait a second and then close it so it doesn't chew up bandwidth constantly trying to reconnect.
 				time.Sleep(time.Second)
