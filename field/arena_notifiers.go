@@ -6,11 +6,12 @@
 package field
 
 import (
+	"strconv"
+
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/Team254/cheesy-arena/playoff"
 	"github.com/Team254/cheesy-arena/websocket"
-	"strconv"
 )
 
 type ArenaNotifiers struct {
@@ -31,8 +32,7 @@ type ArenaNotifiers struct {
 	ScoringStatusNotifier              *websocket.Notifier
 
 	//notify driver station displays about a/e stop trip
-	StationTripNotifier					*websocket.Notifier
-
+	StationTripNotifier *websocket.Notifier
 }
 
 type MatchTimeMessage struct {
@@ -364,22 +364,4 @@ func getRulesViolated(redFouls, blueFouls []game.Foul) map[int]*game.Rule {
 		rules[foul.RuleId] = game.GetRuleById(foul.RuleId)
 	}
 	return rules
-}
-
-// notifies websocket of changes in a/e stop outside of match
-func (arena *Arena) NotifyStationTripStatus() {
-	matchInProgress := arena.MatchState != PreMatch &&
-		arena.MatchState != StartMatch &&
-		arena.MatchState != PostMatch &&
-		arena.MatchState != TimeoutActive &&
-		arena.MatchState != PostTimeout
-
-	for id, station := range arena.AllianceStations {
-		arena.StationTripNotifier.NotifyWithMessage(map[string]any{
-			"StationId":        id,
-			"AStopTripped":     station.AStop,
-			"EStopTripped":     station.EStop,
-			"MatchInProgress":  matchInProgress,
-		})
-	}
 }
