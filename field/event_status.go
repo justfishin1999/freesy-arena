@@ -119,7 +119,7 @@ func (arena *Arena) getEarlyLateMessage() string {
 	if minutesLate > earlyLateThresholdMin {
 		return fmt.Sprintf("Event is running %d minutes late", int(minutesLate))
 	} else if minutesLate < -earlyLateThresholdMin {
-		return fmt.Sprintf("Event is running %d minutes early", int(-minutesLate))
+		return fmt.Sprintf("Event is running %d minutes ahead", int(-minutesLate))
 	}
 	return "Event is running on schedule"
 }
